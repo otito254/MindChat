@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4A90E2">
+    <title>MindChat - Your Mental Health Companion</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='%234A90E2'/%3E%3Cpath d='M35 45 Q50 30 65 45 Q50 60 35 45' fill='white'/%3E%3C/svg%3E">
+    <style>
+        /* CSS Variables for theming */
+        :root {
+            --primary: #4A90E2;
+            --secondary: #7ED321;
+            --danger: #D0021B;
+            --warning: #F5A623;
+            --neutral: #9B9B9B;
+            --background: #FFFFFF;
+            --surface: #F8F9FA;
+            --text: #2C3E50;
+            --text-light: #6C757D;
+            --radius: 12px;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Layout containers */
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 0 16px;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Header */
+        .header {
+            background: var(--primary);
+            color: white;
+            padding: 20px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .connection-status {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+        }
+
+        .status-online { background: var(--secondary); }
+        .status-offline { background: var(--warning); }
+
+        /* Navigation */
+        .nav-tabs {
+            display: flex;
+            background: var(--surface);
+            border-radius: var(--radius) var(--radius) 0 0;
+            margin-top: 16px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .nav-tabs::-webkit-scrollbar { display: none; }
+
+        .nav-tab {
+            flex: 1;
+            min-width: 80px;
+            padding: 16px 8px;
+            text-align: center;
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-tab.active {
+            color: var(--primary);
+            background: var(--background);
+        }
+
+        .nav-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 3px 3px 0 0;
+        }
+
+        /* Content sections */
+        .content {
+            background: var(--background);
+            min-height: calc(100vh - 200px);
+            padding: 24px 0;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        /* Mood tracking */
+        .mood-check {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .mood-question {
+            font-size: 18px;
+            margin-bottom: 24px;
+            color: var(--text);
+        }
+
+        .mood-options {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .mood-btn {
+            width: 60px;
+            height: 60px;
+            border: 3px solid transparent;
+            border-radius: 50%;
+            background: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mood-btn:hover, .mood-btn.selected {
+            transform: scale(1.1);
+            border-color: var(--primary);
+            box-shadow: var(--shadow);
+        }
+
+        .mood-terrible { background: #FF6B6B; }
+        .mood-bad { background: #FFA07A; }
+        .mood-okay { background: #FFD700; }
+        .mood-good { background: #98FB98; }
+        .mood-great { background: #87CEEB; }
+
+        /* CBT Sessions */
+        .cbt-sessions {
+            display: grid;
+            gap: 16px;
+        }
+
+        .session-card {
+            background: var(--surface);
+            padding: 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .session-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .session-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .session-meta {
+            font-size: 14px;
+            color: var(--text-light);
+            display: flex;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .session-progress {
+            width: 100%;
+            height: 4px;
+            background: #E0E0E0;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .session-progress-fill {
+            height: 100%;
+            background: var(--secondary);
+            transition: width 0.3s ease;
+        }
+
+        /* Audio Player */
+        .audio-player {
+            background: var(--surface);
+            padding: 24px;
+            border-radius: var(--radius);
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .play-btn {
+            width: 80px;
+            height: 80px;
+            border: none;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            font-size: 32px;
+            cursor: pointer;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .play-btn:hover {
+            background: #357ABD;
+            transform: scale(1.05);
+        }
+
+        .audio-progress {
+            width: 100%;
+            height: 6px;
+            background: #E0E0E0;
+            border-radius: 3px;
+            margin: 16px 0;
+            cursor: pointer;
+        }
+
+        .audio-progress-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 3px;
+            transition: width 0.1s ease;
+        }
+
+        .audio-time {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: var(--text-light);
+        }
+
+        /* Peer Support */
+        .peer-rooms {
+            display: grid;
+            gap: 12px;
+        }
+
+        .room-card {
+            background: var(--surface);
+            padding: 16px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid var(--primary);
+        }
+
+        .room-card:hover {
+            background: #F0F8FF;
+        }
+
+        .room-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .room-name {
+            font-weight: 600;
+        }
+
+        .room-count {
+            background: var(--primary);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        .room-topic {
+            font-size: 14px;
+            color: var(--text-light);
+            margin-bottom: 8px;
+        }
+
+        .room-status {
+            font-size: 12px;
+            color: var(--secondary);
+        }
+
+        /* Crisis Support */
+        .crisis-support {
+            text-align: center;
+        }
+
+        .crisis-warning {
+            background: #FFF3CD;
+            border: 2px solid var(--warning);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .emergency-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            border-radius: var(--radius);
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 16px 0;
+            transition: all 0.3s ease;
+            display: block;
+            width: 100%;
+        }
+
+        .emergency-btn:hover {
+            background: #B71C1C;
+            transform: translateY(-2px);
+        }
+
+        .breathing-exercise {
+            background: var(--surface);
+            padding: 24px;
+            border-radius: var(--radius);
+            margin-top: 24px;
+        }
+
+        .breath-circle {
+            width: 120px;
+            height: 120px;
+            border: 4px solid var(--primary);
+            border-radius: 50%;
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary);
+            transition: all 4s ease-in-out;
+        }
+
+        .breath-circle.breathing {
+            transform: scale(1.2);
+            border-color: var(--secondary);
+            color: var(--secondary);
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: var(--background);
+            border-top: 1px solid #E0E0E0;
+            padding: 8px 0;
+            z-index: 100;
+        }
+
+        .bottom-nav-items {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px;
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 12px;
+            transition: color 0.3s ease;
+        }
+
+        .bottom-nav-item.active {
+            color: var(--primary);
+        }
+
+        .bottom-nav-icon {
+            width: 24px;
+            height: 24px;
+            stroke-width: 2;
+        }
+
+        /* Utilities */
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: var(--radius);
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #357ABD;
+        }
+
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: #E9ECEF;
+        }
+
+        .text-center { text-align: center; }
+        .mb-16 { margin-bottom: 16px; }
+        .mb-24 { margin-bottom: 24px; }
+
+        /* Responsive Design */
+        @media (max-width: 320px) {
+            .container { padding: 0 12px; }
+            .mood-btn { width: 50px; height: 50px; font-size: 24px; }
+            .nav-tab { padding: 12px 6px; font-size: 12px; }
+        }
+
+        /* Loading States */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Offline indicator */
+        .offline-banner {
+            background: var(--warning);
+            color: white;
+            text-align: center;
+            padding: 8px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .offline .offline-banner {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="container">
+        <!-- Offline Banner -->
+        <div class="offline-banner">
+            You're offline. Some features may be limited.
+        </div>
+
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <span>🧠</span> MindChat
+                </div>
+                <div class="connection-status">
+                    <span class="status-dot status-online" id="connectionDot"></span>
+                    <span id="connectionText">Online</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-section="home">Home</button>
+            <button class="nav-tab" data-section="cbt">CBT</button>
+            <button class="nav-tab" data-section="peer">Peer</button>
+            <button class="nav-tab" data-section="journey">Journey</button>
+            <button class="nav-tab" data-section="crisis">Crisis</button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="content">
+            <!-- Home Section -->
+            <section class="section active" id="home">
+                <div class="mood-check">
+                    <h2 class="mood-question">How are you feeling right now?</h2>
+                    <div class="mood-options">
+                        <button class="mood-btn mood-terrible" data-mood="1" title="Terrible">😰</button>
+                        <button class="mood-btn mood-bad" data-mood="2" title="Bad">😔</button>
+                        <button class="mood-btn mood-okay" data-mood="3" title="Okay">😐</button>
+                        <button class="mood-btn mood-good" data-mood="4" title="Good">😊</button>
+                        <button class="mood-btn mood-great" data-mood="5" title="Great">😄</button>
+                    </div>
+                    <p id="moodFeedback" class="text-center mb-24"></p>
+                </div>
+
+                <div class="quick-actions">
+                    <div class="session-card" onclick="switchToSection('cbt')">
+                        <div class="session-title">🎧 Quick CBT Session</div>
+                        <div class="session-meta">
+                            <span>⏱️ 5 min</span>
+                            <span>🌟 Anxiety Relief</span>
+                        </div>
+                        <div class="session-progress">
+                            <div class="session-progress-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="session-card" onclick="switchToSection('peer')">
+                        <div class="session-title">💬 Join Peer Support</div>
+                        <div class="session-meta">
+                            <span>👥 3 rooms active</span>
+                            <span>🔒 Anonymous</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CBT Section -->
+            <section class="section" id="cbt">
+                <div class="audio-player">
+                    <h3 class="mb-16">Breathing & Relaxation</h3>
+                    <button class="play-btn" id="playBtn">▶️</button>
+                    <div class="audio-progress" id="audioProgress">
+                        <div class="audio-progress-fill" id="audioProgressFill"></div>
+                    </div>
+                    <div class="audio-time">
+                        <span id="currentTime">0:00</span>
+                        <span id="duration">5:00</span>
+                    </div>
+                </div>
+
+                <div class="cbt-sessions">
+                    <div class="session-card">
+                        <div class="session-title">🌬️ Deep Breathing Basics</div>
+                        <div class="session-meta">
+                            <span>⏱️ 5 min</span>
+                            <span>🔰 Beginner</span>
+                            <span>📱 Offline Ready</span>
+                        </div>
+                        <div class="session-progress">
+                            <div class="session-progress-fill" style="width: 100%"></div>
+                        </div>
+                    </div>
+
+                    <div class="session-card">
+                        <div class="session-title">🧠 Thought Challenging</div>
+                        <div class="session-meta">
+                            <span>⏱️ 7 min</span>
+                            <span>📈 Intermediate</span>
+                            <span>🌐 Download</span>
+                        </div>
+                        <div class="session-progress">
+                            <div class="session-progress-fill" style="width: 60%"></div>
+                        </div>
+                    </div>
+
+                    <div class="session-card">
+                        <div class="session-title">😴 Sleep Preparation</div>
+                        <div class="session-meta">
+                            <span>⏱️ 10 min</span>
+                            <span>🌙 Evening</span>
+                            <span>📱 Offline Ready</span>
+                        </div>
+                        <div class="session-progress">
+                            <div class="session-progress-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Peer Support Section -->
+            <section class="section" id="peer">
+                <div class="peer-rooms">
+                    <div class="room-card">
+                        <div class="room-header">
+                            <div class="room-name">🌱 New Beginnings</div>
+                            <div class="room-count">7</div>
+                        </div>
+                        <div class="room-topic">Support for life transitions and new challenges</div>
+                        <div class="room-status">✅ Moderated • Active now</div>
+                    </div>
+
+                    <div class="room-card">
+                        <div class="room-header">
+                            <div class="room-name">🤱 New Mothers Circle</div>
+                            <div class="room-count">12</div>
+                        </div>
+                        <div class="room-topic">Postpartum support and parenting guidance</div>
+                        <div class="room-status">✅ Moderated • Very active</div>
+                    </div>
+
+                    <div class="room-card">
+                        <div class="room-header">
+                            <div class="room-name">🏠 Finding Home</div>
+                            <div class="room-count">5</div>
+                        </div>
+                        <div class="room-topic">For displaced persons seeking community</div>
+                        <div class="room-status">✅ Moderated • Quiet</div>
+                    </div>
+
+                    <div class="room-card">
+                        <div class="room-header">
+                            <div class="room-name">📚 Student Stress</div>
+                            <div class="room-count">15</div>
+                        </div>
+                        <div class="room-topic">Academic pressure and study support</div>
+                        <div class="room-status">✅ Moderated • Very active</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Journey Section -->
+            <section class="section" id="journey">
+                <div class="mood-tracking">
+                    <h3 class="mb-24">Your Mood Journey</h3>
+                    
+                    <div class="mood-summary">
+                        <div class="session-card">
+                            <div class="session-title">📊 This Week</div>
+                            <div class="mood-chart">
+                                <div class="mood-options">
+                                    <div class="mood-btn mood-terrible">😰<br><small>Mon</small></div>
+                                    <div class="mood-btn mood-okay">😐<br><small>Tue</small></div>
+                                    <div class="mood-btn mood-good">😊<br><small>Wed</small></div>
+                                    <div class="mood-btn mood-good selected">😊<br><small>Today</small></div>
+                                    <div class="mood-btn" style="opacity:0.3">?<br><small>Fri</small></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="achievements">
+                        <h4 class="mb-16">🏆 Achievements</h4>
+                        <div class="session-card">
+                            <div class="session-title">🔥 7-Day Streak</div>
+                            <p>You've checked in for 7 days straight!</p>
+                        </div>
+                        <div class="session-card">
+                            <div class="session-title">🎧 First Session</div>
+                            <p>Completed your first CBT session</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Crisis Support Section -->
+            <section class="section" id="crisis">
+                <div class="crisis-support">
+                    <div class="crisis-warning">
+                        <h3>🚨 Need Immediate Help?</h3>
+                        <p>If you're having thoughts of self-harm or suicide, please reach out for immediate support.</p>
+                    </div>
+
+                    <button class="emergency-btn" onclick="callEmergency()">
+                        📞 Call Crisis Hotline
+                    </button>
+
+                    <div class="breathing-exercise">
+                        <h4 class="mb-16">🫁 Breathing Exercise</h4>
+                        <div class="breath-circle" id="breathCircle">Breathe</div>
+                        <button class="btn" id="breathBtn" onclick="startBreathing()">Start Breathing Exercise</button>
+                    </div>
+
+                    <div class="crisis-resources" style="margin-top: 24px;">
+                        <div class="session-card">
+                            <div class="session-title">🛡️ Safety Plan</div>
+                            <p>Create and review your personal safety plan</p>
+                        </div>
+                        <div class="session-card">
+                            <div class="session-title">🔗 Local Resources</div>
+                            <p>Find mental health services in your area</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // App State
+        let appState = {
+            currentSection: 'home',
+            isOnline: navigator.onLine,
+            currentMood: null,
+            audioPlaying: false,
+            audioProgress: 0,
+            breathingActive: false
+        };
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+            registerServiceWorker();
+            setupEventListeners();
+            loadStoredData();
+        });
+
+        function initializeApp() {
+            console.log('🧠 MindChat initialized');
+            updateConnectionStatus();
+            
+            // Check for stored mood data
+            const lastMood = localStorage.getItem('lastMood');
+            if (lastMood) {
+                document.querySelector(`[data-mood="${lastMood}"]`).classList.add('selected');
+                showMoodFeedback(parseInt(lastMood));
+            }
+        }
+
+        // Service Worker Registration
+        async function registerServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registration = await navigator.serviceWorker.register('/sw.js');
+                    console.log('✅ Service Worker registered:', registration);
+                } catch (error) {
+                    console.log('❌ Service Worker registration failed:', error);
+                }
+            }
+        }
+
+        // Event Listeners Setup
+        function setupEventListeners() {
+            // Navigation tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    const section = e.target.dataset.section;
+                    switchToSection(section);
+                });
+            });
+
+            // Mood tracking
+            document.querySelectorAll('.mood-btn').forEach(btn => {
+                if (btn.dataset.mood) {
+                    btn.addEventListener('click', (e) => {
+                        const mood = parseInt(e.target.dataset.mood);
+                        selectMood(mood);
+                    });
+                }
+            });
+
+            // Audio player controls
+            const playBtn = document.getElementById('playBtn');
+            if (playBtn) {
+                playBtn.addEventListener('click', toggleAudio);
+            }
+
+            const audioProgress = document.getElementById('audioProgress');
+            if (audioProgress) {
+                audioProgress.addEventListener('click', seekAudio);
+            }
+
+            // Online/offline detection
+            window.addEventListener('online', updateConnectionStatus);
+            window.addEventListener('offline', updateConnectionStatus);
+
+            // Room cards - peer support
+            document.querySelectorAll('.room-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    joinPeerRoom(e.target.closest('.room-card'));
+                });
+            });
+
+            // CBT session cards
+            document.querySelectorAll('.cbt-sessions .session-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    startCBTSession(e.target.closest('.session-card'));
+                });
+            });
+        }
+
+        // Section Navigation
+        function switchToSection(sectionName) {
+            // Update active tab
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`[data-section="${sectionName}"]`).classList.add('active');
+
+            // Update active section
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionName).classList.add('active');
+
+            appState.currentSection = sectionName;
+            
+            // Track section visits
+            trackEvent('section_visit', { section: sectionName });
+        }
+
+        // Mood Tracking Functions
+        function selectMood(mood) {
+            // Remove previous selection
+            document.querySelectorAll('.mood-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+
+            // Add selection to clicked mood
+            document.querySelector(`[data-mood="${mood}"]`).classList.add('selected');
+            
+            appState.currentMood = mood;
+            
+            // Store mood data
+            const today = new Date().toISOString().split('T')[0];
+            let moodHistory = JSON.parse(localStorage.getItem('moodHistory') || '{}');
+            moodHistory[today] = mood;
+            localStorage.setItem('moodHistory', JSON.stringify(moodHistory));
+            localStorage.setItem('lastMood', mood.toString());
+
+            // Show feedback
+            showMoodFeedback(mood);
+
+            // Suggest appropriate content based on mood
+            suggestContent(mood);
+
+            // Track mood selection
+            trackEvent('mood_selected', { mood: mood });
+        }
+
+        function showMoodFeedback(mood) {
+            const feedback = document.getElementById('moodFeedback');
+            const messages = {
+                1: "I understand you're struggling. You're not alone. 💙",
+                2: "It's okay to have difficult days. Let's find some support. 🤗",
+                3: "Thanks for checking in. How can we help you today? 😌",
+                4: "Great to hear you're doing well! Keep it up. 😊",
+                5: "Wonderful! Your positive energy is inspiring. ✨"
+            };
+            
+            feedback.textContent = messages[mood];
+            feedback.style.display = 'block';
+
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                feedback.style.opacity = '0.7';
+            }, 5000);
+        }
+
+        function suggestContent(mood) {
+            // Low mood suggestions
+            if (mood <= 2) {
+                showNotification("💙 Try a breathing exercise or connect with peers for support");
+                // Highlight crisis support if mood is very low
+                if (mood === 1) {
+                    document.querySelector('[data-section="crisis"]').style.background = '#FFF3E0';
+                }
+            }
+            // Good mood suggestions
+            else if (mood >= 4) {
+                showNotification("🌟 You're doing great! Maybe share your positivity in peer support?");
+            }
+        }
+
+        // Audio Player Functions
+        function toggleAudio() {
+            const playBtn = document.getElementById('playBtn');
+            
+            if (appState.audioPlaying) {
+                // Pause audio
+                playBtn.textContent = '▶️';
+                appState.audioPlaying = false;
+                clearInterval(appState.audioTimer);
+                trackEvent('audio_paused');
+            } else {
+                // Play audio
+                playBtn.textContent = '⏸️';
+                appState.audioPlaying = true;
+                startAudioProgress();
+                trackEvent('audio_started');
+                
+                // Simulate audio playback (in real app, would use Web Audio API)
+                simulateAudioPlayback();
+            }
+        }
+
+        function startAudioProgress() {
+            const duration = 300; // 5 minutes in seconds
+            let elapsed = appState.audioProgress * duration;
+            
+            appState.audioTimer = setInterval(() => {
+                if (elapsed >= duration) {
+                    // Audio finished
+                    document.getElementById('playBtn').textContent = '▶️';
+                    appState.audioPlaying = false;
+                    appState.audioProgress = 0;
+                    clearInterval(appState.audioTimer);
+                    
+                    // Show completion message
+                    showNotification("🎉 Great job completing the session!");
+                    trackEvent('audio_completed');
+                    
+                    updateAudioProgress();
+                    return;
+                }
+                
+                elapsed++;
+                appState.audioProgress = elapsed / duration;
+                updateAudioProgress();
+            }, 1000);
+        }
+
+        function updateAudioProgress() {
+            const progressFill = document.getElementById('audioProgressFill');
+            const currentTime = document.getElementById('currentTime');
+            
+            progressFill.style.width = (appState.audioProgress * 100) + '%';
+            
+            const elapsed = Math.floor(appState.audioProgress * 300);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            currentTime.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function seekAudio(e) {
+            const rect = e.target.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const percentage = clickX / rect.width;
+            
+            appState.audioProgress = Math.max(0, Math.min(1, percentage));
+            updateAudioProgress();
+            
+            trackEvent('audio_seeked', { position: percentage });
+        }
+
+        function simulateAudioPlayback() {
+            // In a real implementation, this would handle actual audio playback
+            // For now, we'll just simulate the progress
+            console.log('🎧 Playing CBT session audio...');
+            
+            // Show visual feedback
+            const player = document.querySelector('.audio-player');
+            player.style.borderLeft = '4px solid var(--secondary)';
+            
+            setTimeout(() => {
+                if (appState.audioPlaying) {
+                    player.style.borderLeft = 'none';
+                }
+            }, 1000);
+        }
+
+        // Peer Support Functions
+        function joinPeerRoom(roomCard) {
+            const roomName = roomCard.querySelector('.room-name').textContent;
+            
+            // Simulate joining room
+            showNotification(`🚪 Joining ${roomName}...`);
+            
+            // Add visual feedback
+            roomCard.style.background = '#E3F2FD';
+            roomCard.style.borderLeft = '4px solid var(--secondary)';
+            
+            setTimeout(() => {
+                // Simulate successful join
+                showNotification(`✅ Welcome to ${roomName}! Remember, this is a safe, anonymous space.`);
+                
+                // In real app, would open chat interface
+                simulatePeerChat(roomName);
+                
+                trackEvent('peer_room_joined', { room: roomName });
+            }, 2000);
+        }
+
+        function simulatePeerChat(roomName) {
+            // Create a simple chat simulation overlay
+            const chatOverlay = document.createElement('div');
+            chatOverlay.innerHTML = `
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; align-items: center; justify-content: center;">
+                    <div style="background: white; max-width: 400px; width: 90%; height: 70vh; border-radius: 12px; padding: 20px; display: flex; flex-direction: column;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #eee; padding-bottom: 16px;">
+                            <h3>${roomName}</h3>
+                            <button onclick="closePeerChat()" style="background: none; border: none; font-size: 24px; cursor: pointer;">×</button>
+                        </div>
+                        <div style="flex: 1; overflow-y: auto; padding: 16px 0;">
+                            <div style="margin-bottom: 12px; padding: 8px; background: #f0f0f0; border-radius: 8px;">
+                                <strong>Moderator:</strong> Welcome! Please remember our community guidelines: be respectful, no personal information, and support each other. 🤗
+                            </div>
+                            <div style="margin-bottom: 12px; padding: 8px; background: #e3f2fd; border-radius: 8px;">
+                                <strong>Anonymous User:</strong> Thank you for this space. It means a lot to have somewhere to talk.
+                            </div>
+                            <div style="margin-bottom: 12px; padding: 8px; background: #f3e5f5; border-radius: 8px;">
+                                <strong>Anonymous User:</strong> I'm new here. Just wanted to say hi 👋
+                            </div>
+                        </div>
+                        <div style="border-top: 1px solid #eee; padding-top: 16px;">
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" placeholder="Type your message..." style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 8px;">
+                                <button style="background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 8px;">Send</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(chatOverlay);
+        }
+
+        function closePeerChat() {
+            const overlay = document.querySelector('[style*="position: fixed"]');
+            if (overlay) {
+                overlay.remove();
+            }
+            
+            // Reset room card appearance
+            document.querySelectorAll('.room-card').forEach(card => {
+                card.style.background = '';
+                card.style.borderLeft = '4px solid var(--primary)';
+            });
+        }
+
+        // CBT Session Functions
+        function startCBTSession(sessionCard) {
+            const sessionTitle = sessionCard.querySelector('.session-title').textContent;
+            
+            showNotification(`🎧 Starting: ${sessionTitle}`);
+            
+            // Update progress bar
+            const progressFill = sessionCard.querySelector('.session-progress-fill');
+            let currentProgress = parseFloat(progressFill.style.width) || 0;
+            
+            // Simulate session progress
+            const interval = setInterval(() => {
+                currentProgress += 5;
+                progressFill.style.width = currentProgress + '%';
+                
+                if (currentProgress >= 100) {
+                    clearInterval(interval);
+                    showNotification(`✅ Completed: ${sessionTitle}`);
+                    
+                    // Mark as completed and update achievement
+                    trackEvent('cbt_session_completed', { session: sessionTitle });
+                    updateAchievements();
+                }
+            }, 500);
+            
+            // Switch to CBT section and start audio player
+            switchToSection('cbt');
+            setTimeout(() => {
+                if (!appState.audioPlaying) {
+                    toggleAudio();
+                }
+            }, 1000);
+        }
+
+        // Crisis Support Functions
+        function callEmergency() {
+            // In real app, would initiate actual phone call
+            // For demo, show emergency resources
+            
+            const confirmCall = confirm("This will connect you to a crisis hotline. Continue?");
+            
+            if (confirmCall) {
+                showNotification("📞 Connecting to crisis support...");
+                
+                // Track crisis intervention usage
+                trackEvent('crisis_hotline_accessed', { timestamp: new Date().toISOString() });
+                
+                // Simulate call interface
+                setTimeout(() => {
+                    alert("In a real app, this would dial your local crisis hotline.\n\nFor immediate help:\n• US: 988 (Suicide & Crisis Lifeline)\n• UK: 116 123 (Samaritans)\n• International: befrienders.org");
+                }, 2000);
+            }
+        }
+
+        function startBreathing() {
+            const breathCircle = document.getElementById('breathCircle');
+            const breathBtn = document.getElementById('breathBtn');
+            
+            if (appState.breathingActive) {
+                // Stop breathing exercise
+                appState.breathingActive = false;
+                breathBtn.textContent = 'Start Breathing Exercise';
+                breathCircle.classList.remove('breathing');
+                breathCircle.textContent = 'Breathe';
+                clearInterval(appState.breathingTimer);
+                return;
+            }
+            
+            // Start breathing exercise
+            appState.breathingActive = true;
+            breathBtn.textContent = 'Stop Exercise';
+            
+            let phase = 'in'; // 'in', 'hold', 'out'
+            let count = 4;
+            
+            function updateBreathingDisplay() {
+                breathCircle.textContent = `${phase === 'in' ? 'Breathe In' : phase === 'hold' ? 'Hold' : 'Breathe Out'} (${count})`;
+                
+                if (phase === 'in') {
+                    breathCircle.classList.add('breathing');
+                } else if (phase === 'out') {
+                    breathCircle.classList.remove('breathing');
+                }
+            }
+            
+            updateBreathingDisplay();
+            
+            appState.breathingTimer = setInterval(() => {
+                count--;
+                
+                if (count <= 0) {
+                    // Switch to next phase
+                    if (phase === 'in') {
+                        phase = 'hold';
+                        count = 4;
+                    } else if (phase === 'hold') {
+                        phase = 'out';
+                        count = 4;
+                    } else {
+                        phase = 'in';
+                        count = 4;
+                    }
+                }
+                
+                updateBreathingDisplay();
+            }, 1000);
+            
+            trackEvent('breathing_exercise_started');
+        }
+
+        // Connection Status Management
+        function updateConnectionStatus() {
+            const isOnline = navigator.onLine;
+            const dot = document.getElementById('connectionDot');
+            const text = document.getElementById('connectionText');
+            const app = document.getElementById('app');
+            
+            if (isOnline) {
+                dot.className = 'status-dot status-online';
+                text.textContent = 'Online';
+                app.classList.remove('offline');
+            } else {
+                dot.className = 'status-dot status-offline';
+                text.textContent = 'Offline';
+                app.classList.add('offline');
+            }
+            
+            appState.isOnline = isOnline;
+        }
+
+        // Data Management
+        function loadStoredData() {
+            // Load mood history
+            const moodHistory = JSON.parse(localStorage.getItem('moodHistory') || '{}');
+            
+            // Load session progress
+            const sessionProgress = JSON.parse(localStorage.getItem('sessionProgress') || '{}');
+            
+            // Load achievements
+            const achievements = JSON.parse(localStorage.getItem('achievements') || '[]');
+            
+            console.log('📊 Loaded stored data:', { moodHistory, sessionProgress, achievements });
+        }
+
+        function updateAchievements() {
+            let achievements = JSON.parse(localStorage.getItem('achievements') || '[]');
+            
+            // Check for new achievements
+            const moodHistory = JSON.parse(localStorage.getItem('moodHistory') || '{}');
+            const moodDays = Object.keys(moodHistory).length;
+            
+            // 7-day streak achievement
+            if (moodDays >= 7 && !achievements.includes('7_day_streak')) {
+                achievements.push('7_day_streak');
+                showNotification('🏆 Achievement unlocked: 7-Day Streak!');
+            }
+            
+            // First session achievement
+            if (!achievements.includes('first_session')) {
+                achievements.push('first_session');
+                showNotification('🏆 Achievement unlocked: First Session Complete!');
+            }
+            
+            localStorage.setItem('achievements', JSON.stringify(achievements));
+        }
+
+        // Utility Functions
+        function showNotification(message) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.innerHTML = `
+                <div style="position: fixed; top: 20px; right: 20px; background: var(--primary); color: white; padding: 16px; border-radius: 8px; z-index: 1000; max-width: 300px; box-shadow: var(--shadow);">
+                    ${message}
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto-remove after 4 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 4000);
+        }
+
+        function trackEvent(eventName, data = {}) {
+            // In production, this would send to analytics service
+            console.log('📈 Event:', eventName, data);
+            
+            // Store locally for offline analysis
+            let events = JSON.parse(localStorage.getItem('analytics_events') || '[]');
+            events.push({
+                event: eventName,
+                data: data,
+                timestamp: new Date().toISOString(),
+                session: Date.now() // Simple session ID
+            });
+            
+            // Keep only last 100 events to manage storage
+            if (events.length > 100) {
+                events = events.slice(-100);
+            }
+            
+            localStorage.setItem('analytics_events', JSON.stringify(events));
+        }
+
+        // Expose functions globally for HTML onclick handlers
+        window.switchToSection = switchToSection;
+        window.callEmergency = callEmergency;
+        window.startBreathing = startBreathing;
+        window.closePeerChat = closePeerChat;
+
+        // Handle app installation prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Show install button
+            showNotification('📱 Install MindChat for offline access!');
+        });
+
+        // Handle successful installation
+        window.addEventListener('appinstalled', (evt) => {
+            console.log('✅ MindChat installed successfully');
+            showNotification('🎉 MindChat installed! You can now use it offline.');
+        });
+
+        // Keyboard shortcuts for accessibility
+        document.addEventListener('keydown', (e) => {
+            if (e.altKey) {
+                switch(e.key) {
+                    case '1':
+                        switchToSection('home');
+                        break;
+                    case '2':
+                        switchToSection('cbt');
+                        break;
+                    case '3':
+                        switchToSection('peer');
+                        break;
+                    case '4':
+                        switchToSection('journey');
+                        break;
+                    case '5':
+                        switchToSection('crisis');
+                        break;
+                    case ' ':
+                        if (appState.currentSection === 'cbt') {
+                            toggleAudio();
+                        }
+                        break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
